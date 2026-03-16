@@ -4,6 +4,7 @@ import { VinInput } from './components/VinInput';
 import { ManualSelection } from './components/ManualSelection';
 import { ManualEntry } from './components/ManualEntry';
 import { CarInfo } from './components/CarInfo';
+import { AiVinAnalysis } from './components/AiVinAnalysis';
 import { OilResults } from './components/OilResults';
 import { FilterResults } from './components/FilterResults';
 import { AiSurvey } from './components/AiSurvey';
@@ -44,6 +45,8 @@ export default function App() {
     localStorage.setItem('search_history', JSON.stringify(newHistory));
   };
 
+  const [aiVinText, setAiVinText] = useState<string | null>(null);
+
   const handleVinSearch = async (vin: string) => {
     setLoading(true);
     setTempVin(vin);
@@ -55,6 +58,7 @@ export default function App() {
     if (result && result.make && result.make !== 'Unknown') {
       setCarData(result);
       saveToHistory(result);
+      setAiVinText((window as any).lastAiVinText || null);
       setScreen('results');
       setAiText(null);
     } else {
@@ -241,6 +245,16 @@ export default function App() {
             >
               <CarInfo car={carData} />
             </motion.div>
+
+            {aiVinText && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.15 }}
+              >
+                <AiVinAnalysis text={aiVinText} />
+              </motion.div>
+            )}
             
             <motion.div
               initial={{ opacity: 0, y: 20 }}

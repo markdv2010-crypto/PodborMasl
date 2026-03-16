@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { SurveyData } from '../types';
-import { Thermometer, Navigation, Zap, History } from 'lucide-react';
+import { Thermometer, Navigation, Zap, History, Sparkles } from 'lucide-react';
 
 interface AiSurveyProps {
   onComplete: (data: SurveyData) => void;
@@ -20,13 +20,13 @@ export const AiSurvey: React.FC<AiSurveyProps> = ({ onComplete }) => {
   };
 
   return (
-    <div className="bg-[var(--tg-theme-secondary-bg-color)] p-5 rounded-2xl flex flex-col gap-5">
-      <div className="text-center">
-        <h3 className="font-bold text-lg">ИИ-рекомендация</h3>
-        <p className="text-xs opacity-60">Ответьте на 4 вопроса для точного подбора</p>
+    <div className="bg-[var(--tg-theme-secondary-bg-color)] p-6 rounded-3xl flex flex-col gap-6 border border-black/5 shadow-sm">
+      <div className="flex flex-col gap-1">
+        <h3 className="font-black uppercase tracking-tight text-lg">Персонализация ИИ</h3>
+        <p className="text-[10px] opacity-40 font-bold uppercase tracking-widest">Qwen 3.5 учтет условия эксплуатации</p>
       </div>
 
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-5">
         {/* Climate */}
         <div className="flex flex-col gap-2">
           <label className="text-xs font-bold uppercase opacity-40 flex items-center gap-1">
@@ -100,9 +100,10 @@ export const AiSurvey: React.FC<AiSurveyProps> = ({ onComplete }) => {
 
       <button
         onClick={handleSubmit}
-        className="w-full py-3 rounded-xl bg-[var(--tg-theme-button-color)] text-[var(--tg-theme-button-text-color)] font-bold shadow-lg active:scale-95 transition-transform"
+        className="w-full py-4 rounded-2xl bg-[var(--tg-theme-button-color)] text-[var(--tg-theme-button-text-color)] font-black uppercase tracking-widest shadow-lg shadow-[var(--tg-theme-button-color)]/20 active:scale-95 transition-all flex items-center justify-center gap-2"
       >
-        Получить рекомендацию ИИ
+        <Sparkles size={18} />
+        <span>Сгенерировать подбор</span>
       </button>
     </div>
   );

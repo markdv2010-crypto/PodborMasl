@@ -15,9 +15,14 @@ export const CarInfo: React.FC<CarInfoProps> = ({ car }) => {
       
       <div className="flex flex-col gap-6 relative">
         <div className="flex flex-col gap-1">
-          <div className="flex items-center gap-2 text-[var(--tg-theme-button-color)] mb-1">
-            <Sparkles size={14} />
-            <span className="text-[10px] font-black uppercase tracking-[0.2em]">Автомобиль идентифицирован</span>
+          <div className="flex items-center justify-between mb-1">
+            <div className="flex items-center gap-2 text-[var(--tg-theme-button-color)]">
+              <Sparkles size={14} />
+              <span className="text-[10px] font-black uppercase tracking-[0.2em]">Автомобиль идентифицирован</span>
+            </div>
+            <div className="flex items-center gap-1 px-2 py-0.5 bg-blue-500/10 rounded-full">
+              <span className="text-[8px] font-black text-blue-600 uppercase tracking-tighter">Qwen 3.5 Expert</span>
+            </div>
           </div>
           <h2 className="text-3xl font-black uppercase tracking-tight leading-none">
             {car.make} {car.model}

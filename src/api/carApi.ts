@@ -65,106 +65,29 @@ function extractJson(text: string) {
 }
 
 export async function decodeVinWithAi(vin: string): Promise<CarData | null> {
-  const basePrompt = `
-    Ты — эксперт-автомеханик и специалист по VIN-кодам. Твоя задача — абсолютно точно расшифровать VIN: ${vin}.
-    
-    ИНСТРУКЦИЯ:
-    1. Сначала проанализируй структуру VIN (WMI, VDS, VIS).
-    2. Используй свои знания и поиск, чтобы найти точную модификацию автомобиля.
-    3. Если это Mercedes-Benz, обрати внимание на первые символы (например, W1K — Mercedes-Benz AG).
-    4. Найди точную модель и поколение (например, S-Class W223 350 d).
-    5. Определи код двигателя (например, OM 656.929) и тип трансмиссии.
-    6. Найди заправочные объемы: моторное масло (л), антифриз (л), масло в КПП (л).
-    
-    ВАЖНО: Не выдумывай данные. Если ты не уверен, используй поиск. 
-    Например, для VIN w1k6f3ab9na092131 это ДОЛЖЕН БЫТЬ Mercedes-Benz S-Class (W223) 350 d.
-    
-    Верни ответ СТРОГО в формате JSON. Не пиши ничего, кроме JSON.
-    Формат:
-    {
-      "make": "Марка",
-      "model": "Модель и поколение (например, S-Class W223 350 d)",
-      "year": "Год",
-      "engine": "Объем и тип двигателя (например, 2.9L Diesel)",
-      "engineCode": "Код двигателя (например, OM 656.929)",
-      "bodyType": "Тип кузова",
-      "country": "Страна производства",
-      "engineOilVolume": "Объем масла ДВС (например, 6.5 л)",
-      "transmission": "Тип КПП (например, 9G-TRONIC)",
-      "transmissionVolume": "Объем масла КПП (например, 9.0 л)",
-      "antifreezeVolume": "Объем антифриза (например, 12.0 л)"
-    }
-  `;
-
-  const deepSearchPrompt = `
-    ${basePrompt}
-    
-    ДОПОЛНИТЕЛЬНО: Проведи глубокий поиск по базам данных запчастей и форумам, чтобы найти точные заправочные объемы и артикулы фильтров для этого VIN. 
-    Если VIN не пробивается стандартно, попробуй найти аналогичные модели по VIS (последние 7 знаков).
-  `;
-
   try {
-    // 1. ПРИОРИТЕТ: Qwen Max (самый мощный и "думающий" из доступных)
-    if (process.env.OPENROUTER_API_KEY) {
-      try {
-        console.log('Attempting Qwen Max decode...');
-        const result = await callOpenRouter(basePrompt, "qwen/qwen-max");
-        if (result) {
-          const aiResult = extractJson(result);
-          if (aiResult && aiResult.make && aiResult.make !== 'Unknown') {
-            console.log('Qwen Max success:', aiResult.make, aiResult.model);
-            return { ...aiResult, vin: vin.toUpperCase() };
-          }
-        }
-      } catch (qwenError) {
-        console.error('Qwen Max VIN Decode Error:', qwenError);
-      }
-    }
-
-    // 2. ЗАПАСНОЙ ВАРИАНТ: Gemini с Google Search (Deep Search)
-    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
-    try {
-      console.log('Attempting Gemini Search decode...');
-      const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
-        contents: deepSearchPrompt,
-        config: {
-          tools: [{ googleSearch: {} }]
-        }
-      });
-
-      const text = response.text;
-      if (text) {
-        const aiResult = extractJson(text);
-        if (aiResult && aiResult.make && aiResult.make !== 'Unknown') {
-          console.log('Gemini Search success:', aiResult.make, aiResult.model);
-          return { ...aiResult, vin: vin.toUpperCase() };
-        }
-      }
-    } catch (searchError) {
-      console.error('Gemini Search VIN Decode Error:', searchError);
-    }
-
-    // 3. ПОСЛЕДНИЙ ВАРИАНТ: Стандартный Gemini
-    console.log('Attempting Standard Gemini decode...');
-    const fallbackResponse = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
-      contents: basePrompt,
-      config: {
-        responseMimeType: "application/json"
-      }
+    const response = await fetch('/api/decode-vin', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ vin })
     });
 
-    const fallbackText = fallbackResponse.text;
-    if (fallbackText) {
-      const aiResult = extractJson(fallbackText);
-      if (aiResult && aiResult.make) {
+    if (!response.ok) throw new Error('Backend error');
+    const data = await response.json();
+    const text = data.text;
+
+    console.log('Expert AI Analysis received');
+
+    if (text) {
+      const aiResult = extractJson(text);
+      if (aiResult && aiResult.make && aiResult.make !== 'Unknown') {
+        // Store the full AI text for display if needed
+        (window as any).lastAiVinText = text;
         return { ...aiResult, vin: vin.toUpperCase() };
       }
     }
-
   } catch (error) {
-    console.error('Final VIN Decode Error:', error);
+    console.error('VIN Decode Error:', error);
   }
 
   return null;
