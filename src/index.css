@@ -1,0 +1,49 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --tg-theme-bg-color: #ffffff;
+    --tg-theme-text-color: #000000;
+    --tg-theme-hint-color: #999999;
+    --tg-theme-link-color: #2481cc;
+    --tg-theme-button-color: #2481cc;
+    --tg-theme-button-text-color: #ffffff;
+    --tg-theme-secondary-bg-color: #f4f4f5;
+  }
+
+  /* Support for Telegram Dark Theme */
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --tg-theme-bg-color: #1c1c1d;
+      --tg-theme-text-color: #ffffff;
+      --tg-theme-secondary-bg-color: #2c2c2e;
+    }
+  }
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--tg-theme-hint-color);
+  border-radius: 10px;
+  opacity: 0.3;
+}
+
+.prose {
+  color: var(--tg-theme-text-color);
+}
+
+.prose strong {
+  color: var(--tg-theme-button-color);
+}
+
+.prose p {
+  margin-bottom: 0.5rem;
+}
+

@@ -1,11 +1,37 @@
-<div align="center">
+# MasloMARKET Podbor AI - Telegram Mini App
 
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
+Это приложение для подбора моторных масел и технических жидкостей с использованием ИИ (Gemini) и базы данных RAVENOL.
 
-  <h1>Built with AI Studio</h2>
+## Как запустить в Telegram
 
-  <p>The fastest path from prompt to production with Gemini.</p>
+1. **Создайте бота в @BotFather**:
+   - Отправьте `/newbot` и следуйте инструкциям.
+   - После создания отправьте `/newapp` для создания Mini App.
+   - Выберите вашего бота.
+   - Введите название приложения: `MasloMARKET Podbor AI`.
+   - Загрузите иконку (по желанию).
+   - В поле **URL** укажите ссылку на развернутое приложение (например, с Vercel или Netlify).
+   - Введите `short_name` (например, `maslomarket_ai`).
 
-  <a href="https://aistudio.google.com/apps">Start building</a>
+2. **Настройка переменных окружения**:
+   - В AI Studio или на вашем хостинге добавьте `GEMINI_API_KEY`.
 
-</div>
+3. **Развертывание**:
+   - Приложение готово к развертыванию на любой платформе (Vercel, Netlify, Cloud Run).
+   - Сборка: `npm run build`.
+
+## Функционал
+- Декодирование VIN через NHTSA API.
+- Ручной подбор (Марка -> Модель -> Год -> Мотор).
+- Таблица технических жидкостей (Двигатель, КПП, Мосты, ГУР и т.д.).
+- ИИ-рекомендация на основе климата и стиля вождения.
+- Интеграция с Telegram Web App SDK (темы, кнопки, алерты).
+- История последних 5 поисков.
+
+## Технологии
+- React 19
+- Vite + TypeScript
+- Tailwind CSS v4
+- Motion (framer-motion)
+- Lucide React (иконки)
+- Google Gemini API
