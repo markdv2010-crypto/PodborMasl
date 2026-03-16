@@ -8,13 +8,26 @@ interface OilResultsProps {
 }
 
 export const OilResults: React.FC<OilResultsProps> = ({ car }) => {
-  // Mock technical data based on car details
+  // Dynamic data based on car details
   const recommendations = [
-    { unit: 'Двигатель', viscosity: '5W-30', volume: '4.5 л', ravenol: 'VMP / SSL' },
-    { unit: 'АКПП / Вариатор', viscosity: 'ATF / CVTF', volume: '7.2 л', ravenol: 'T-WS / NS3' },
-    { unit: 'Редуктор / Мост', viscosity: '75W-90', volume: '1.1 л', ravenol: 'DGL / VSG' },
-    { unit: 'Тормозная система', viscosity: 'DOT 4', volume: '1.0 л', ravenol: 'DOT4 Class 6' },
-    { unit: 'Антифриз', viscosity: 'G12++ / P-OAT', volume: '8.5 л', ravenol: 'OTC / HJC' },
+    { 
+      unit: 'Двигатель', 
+      viscosity: car.engine?.toLowerCase().includes('diesel') ? '5W-30 / 0W-30' : '5W-30 / 0W-20', 
+      volume: car.engineOilVolume || 'Определяем...', 
+      ravenol: car.engine?.toLowerCase().includes('diesel') ? 'VMP / HLS' : 'DXG / SFE' 
+    },
+    { 
+      unit: 'Трансмиссия', 
+      viscosity: car.transmission || 'ATF / MTF', 
+      volume: car.transmissionVolume || 'Определяем...', 
+      ravenol: 'См. подбор ИИ' 
+    },
+    { 
+      unit: 'Антифриз', 
+      viscosity: 'OAT / P-OAT', 
+      volume: car.antifreezeVolume || 'Определяем...', 
+      ravenol: 'OTC / HJC' 
+    },
   ];
 
   return (

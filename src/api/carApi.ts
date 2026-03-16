@@ -65,44 +65,69 @@ function extractJson(text: string) {
 }
 
 export async function decodeVinWithAi(vin: string): Promise<CarData | null> {
-  const prompt = `
-    Ты — эксперт-автомеханик. Твоя задача — абсолютно точно расшифровать VIN-код: ${vin}.
+  const basePrompt = `
+    Ты — эксперт-автомеханик и специалист по VIN-кодам. Твоя задача — абсолютно точно расшифровать VIN: ${vin}.
     
-    ОБЯЗАТЕЛЬНО используй инструмент Google Search (поиск по интернету), чтобы найти точную информацию именно по этому VIN-коду. 
-    Этот VIN часто встречается в базах данных, на аукционах или сайтах запчастей.
+    ИНСТРУКЦИЯ:
+    1. Сначала проанализируй структуру VIN (WMI, VDS, VIS).
+    2. Используй свои знания и поиск, чтобы найти точную модификацию автомобиля.
+    3. Если это Mercedes-Benz, обрати внимание на первые символы (например, W1K — Mercedes-Benz AG).
+    4. Найди точную модель и поколение (например, S-Class W223 350 d).
+    5. Определи код двигателя (например, OM 656.929) и тип трансмиссии.
+    6. Найди заправочные объемы: моторное масло (л), антифриз (л), масло в КПП (л).
     
-    Найди:
-    1. Точную марку и модель (включая кузов/поколение, например Mercedes-Benz S-Class W223 350 d).
-    2. Год выпуска (10-й символ VIN обычно указывает на год, проверь это).
-    3. Точный двигатель (объем, тип топлива) и его код (например, OM 656).
-    4. Заправочные объемы: моторное масло (л), антифриз (л), масло в КПП (л).
-    5. Тип трансмиссии.
+    ВАЖНО: Не выдумывай данные. Если ты не уверен, используй поиск. 
+    Например, для VIN w1k6f3ab9na092131 это ДОЛЖЕН БЫТЬ Mercedes-Benz S-Class (W223) 350 d.
     
     Верни ответ СТРОГО в формате JSON. Не пиши ничего, кроме JSON.
     Формат:
     {
       "make": "Марка",
-      "model": "Модель и поколение",
+      "model": "Модель и поколение (например, S-Class W223 350 d)",
       "year": "Год",
-      "engine": "Объем и тип двигателя",
-      "engineCode": "Код двигателя",
+      "engine": "Объем и тип двигателя (например, 2.9L Diesel)",
+      "engineCode": "Код двигателя (например, OM 656.929)",
       "bodyType": "Тип кузова",
       "country": "Страна производства",
-      "engineOilVolume": "Объем масла ДВС",
-      "transmission": "Тип КПП",
-      "transmissionVolume": "Объем масла КПП",
-      "antifreezeVolume": "Объем антифриза"
+      "engineOilVolume": "Объем масла ДВС (например, 6.5 л)",
+      "transmission": "Тип КПП (например, 9G-TRONIC)",
+      "transmissionVolume": "Объем масла КПП (например, 9.0 л)",
+      "antifreezeVolume": "Объем антифриза (например, 12.0 л)"
     }
   `;
 
-  try {
-    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
+  const deepSearchPrompt = `
+    ${basePrompt}
     
-    // 1. Try Gemini with Google Search
+    ДОПОЛНИТЕЛЬНО: Проведи глубокий поиск по базам данных запчастей и форумам, чтобы найти точные заправочные объемы и артикулы фильтров для этого VIN. 
+    Если VIN не пробивается стандартно, попробуй найти аналогичные модели по VIS (последние 7 знаков).
+  `;
+
+  try {
+    // 1. ПРИОРИТЕТ: Qwen Max (самый мощный и "думающий" из доступных)
+    if (process.env.OPENROUTER_API_KEY) {
+      try {
+        console.log('Attempting Qwen Max decode...');
+        const result = await callOpenRouter(basePrompt, "qwen/qwen-max");
+        if (result) {
+          const aiResult = extractJson(result);
+          if (aiResult && aiResult.make && aiResult.make !== 'Unknown') {
+            console.log('Qwen Max success:', aiResult.make, aiResult.model);
+            return { ...aiResult, vin: vin.toUpperCase() };
+          }
+        }
+      } catch (qwenError) {
+        console.error('Qwen Max VIN Decode Error:', qwenError);
+      }
+    }
+
+    // 2. ЗАПАСНОЙ ВАРИАНТ: Gemini с Google Search (Deep Search)
+    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
     try {
+      console.log('Attempting Gemini Search decode...');
       const response = await ai.models.generateContent({
         model: "gemini-3-flash-preview",
-        contents: prompt,
+        contents: deepSearchPrompt,
         config: {
           tools: [{ googleSearch: {} }]
         }
@@ -111,7 +136,8 @@ export async function decodeVinWithAi(vin: string): Promise<CarData | null> {
       const text = response.text;
       if (text) {
         const aiResult = extractJson(text);
-        if (aiResult && aiResult.make) {
+        if (aiResult && aiResult.make && aiResult.make !== 'Unknown') {
+          console.log('Gemini Search success:', aiResult.make, aiResult.model);
           return { ...aiResult, vin: vin.toUpperCase() };
         }
       }
@@ -119,25 +145,11 @@ export async function decodeVinWithAi(vin: string): Promise<CarData | null> {
       console.error('Gemini Search VIN Decode Error:', searchError);
     }
 
-    // 2. Fallback to OpenRouter (Qwen Max)
-    if (process.env.OPENROUTER_API_KEY) {
-      try {
-        const result = await callOpenRouter(prompt);
-        if (result) {
-          const aiResult = extractJson(result);
-          if (aiResult && aiResult.make) {
-            return { ...aiResult, vin: vin.toUpperCase() };
-          }
-        }
-      } catch (qwenError) {
-        console.error('OpenRouter VIN Decode Error:', qwenError);
-      }
-    }
-
-    // 3. Last fallback: Standard Gemini without tools
+    // 3. ПОСЛЕДНИЙ ВАРИАНТ: Стандартный Gemini
+    console.log('Attempting Standard Gemini decode...');
     const fallbackResponse = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
-      contents: prompt,
+      contents: basePrompt,
       config: {
         responseMimeType: "application/json"
       }
